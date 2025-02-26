@@ -8,7 +8,7 @@ exports.up = function (knex) {
     table.time("reservation_time").notNullable();
     table.integer("people").notNullable();
     table.string("observation").notNullable();
-    table.string("table_name").nullable(); // ✅ Store table name instead of table_id
+    table.string("table_name").nullable(); 
     table.timestamps(true, true);
   });
 };
