@@ -80,14 +80,26 @@ const reservationIsNotSeated = async (req, res, next) => {
 const tableIsUnoccupied = async (req, res, next) => {
   const { table_id } = req.params;
   const foundTable = await service.readTable(table_id);
-  if (foundTable.reservation_id === null) {
+  // if (foundTable.reservation_id === null) {
     res.locals.table = foundTable;
     return next();
-  }
-  next({
-    status: 400,
-    message: "Selected table is occupied, please choose a different table",
-  });
+  // }
+  // next({
+  //   status: 400,
+  //   message: "Selected table is occupied, please choose a different table",
+  // });
+};
+const tableCapacity = async (req, res, next) => {
+  const { table_id } = req.params;
+  const foundTable = await service.readTable(table_id);
+  // if (foundTable.reservation_id === null) {
+    res.locals.table = foundTable;
+    return next();
+  // }
+  // next({
+  //   status: 400,
+  //   message: "Selected table is occupied, please choose a different table",
+  // });
 };
 
 const tableHasValidCapacity = (req, res, next) => {
@@ -152,10 +164,11 @@ const create = async (req, res) => {
  */
 const seat = async (req, res) => {
   const reservation_id = res.locals.reservation_id;
-  const { table_id } = res.locals.table;
+  const { table_id, table_name } = res.locals.table;
   const updatedTable = {
     ...req.body.data,
     table_id,
+    table_name
   };
   await service.update(updatedTable, reservation_id);
   res.status(200).json({ data: updatedTable });
@@ -178,7 +191,7 @@ module.exports = {
     hasReservationId,
     asyncErrorBoundary(reservationExists),
     reservationIsNotSeated,
-    asyncErrorBoundary(tableIsUnoccupied),
+    tableCapacity,
     tableHasValidCapacity,
     asyncErrorBoundary(seat),
   ],
