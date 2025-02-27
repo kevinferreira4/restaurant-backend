@@ -127,6 +127,7 @@ const hasValidReservationDate = (req, res, next) => {
 
 const hasReservationTime = (req, res, next) => {
   const { data: { reservation_time } = {} } = req.body;
+  console.log("🚀 ~ hasReservationTime ~ reservation_time:", reservation_time)
   const validTime = /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/;
   if (reservation_time && reservation_time.match(validTime)) {
     res.locals.reservation_time = reservation_time.replace(":", "");
@@ -218,20 +219,17 @@ const reservationStatusIsNotFinished = (req, res, next) => {
 const list = async (req, res) => {
   if (req.query.date) {
     const { date } = req.query;
+
     const reservations = await service.list(date);
-    const filtered = reservations.filter(
-      reservation =>
-        !reservation.status ||
-        reservation.status === "booked" ||
-        reservation.status === "seated"
-    );
+
+    const formattedReservations = reservations.map(reservation => ({
+      ...reservation,
+      reservation_date: new Date(reservation.reservation_date).toISOString().split("T")[0], // Ensure simple YYYY-MM-DD format
+    }));
+
     res.json({
-      data: filtered,
+      data: formattedReservations,
     });
-  }
-  if (req.query.mobile_number) {
-    const { mobile_number } = req.query;
-    res.json({ data: await service.search(mobile_number) });
   }
 };
 
@@ -268,14 +266,24 @@ const updateStatus = async (req, res) => {
  */
 const updateReservation = async (req, res) => {
   const { reservation_id } = res.locals.reservation;
+  let { reservation_date, ...otherUpdates } = req.body.data;
+
+  // Convert `reservation_date` to UTC format before updating
+  if (reservation_date) {
+    reservation_date = new Date(reservation_date).toISOString(); // Converts YYYY-MM-DD to full UTC timestamp
+  }
+
   const updatedReservation = {
-    ...req.body.data,
+    ...otherUpdates,
     reservation_id,
+    reservation_date, // Ensure it's included
   };
-  res
-    .status(200)
-    .json({ data: await service.update(reservation_id, updatedReservation) });
+
+  const updatedData = await service.update(reservation_id, updatedReservation);
+
+  res.status(200).json({ data: updatedData });
 };
+
 
 module.exports = {
   create: [
@@ -299,10 +307,10 @@ module.exports = {
     hasFirstName,
     hasLastName,
     // hasMobileNumber,
-    hasReservationDate,
+    // hasReservationDate,
     // hasValidReservationDate,
-    hasReservationTime,
-    hasValidSameDayReservation,
+    // hasReservationTime,
+    // hasValidSameDayReservation,
     // hasValidReservationTime,
     hasPeople,
     asyncErrorBoundary(reservationExists),

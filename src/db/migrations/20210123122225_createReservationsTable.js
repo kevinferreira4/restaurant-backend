@@ -4,14 +4,16 @@ exports.up = function (knex) {
     table.string("first_name").notNullable();
     table.string("last_name").notNullable();
     table.string("mobile_number").notNullable();
-    table.date("reservation_date").notNullable();
-    table.time("reservation_time").notNullable();
+    table.timestamp("reservation_date").notNullable(); // Changed from `date` to `timestamp`
+    table.time("reservation_time").notNullable(); // Can be kept if timezones don’t matter
     table.integer("people").notNullable();
     table.string("observation").notNullable();
-    table.string("table_name").nullable(); // ✅ Store table name instead of table_id
-    table.timestamps(true, true);
+    table.string("table_name").nullable();
+    table.boolean("guest_arrive").defaultTo(false);
+    table.timestamps(true, true); // Automatically sets created_at & updated_at in UTC
   });
 };
+
 
 exports.down = function (knex) {
   return knex.schema.dropTable("reservations");
